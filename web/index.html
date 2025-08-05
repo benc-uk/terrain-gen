@@ -42,8 +42,8 @@
       .control-group {
         display: flex;
         flex-direction: column;
-        min-width: 200px;
         justify-content: center;
+        padding: 5px 5px;
       }
 
       label {
@@ -92,16 +92,27 @@
 
       #terrainImage {
         border-radius: 8px;
-        width: 800px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.6);
         margin: 0 auto;
       }
 
-      .loading {
-        display: none;
-        text-align: center;
-        color: #666;
-        font-style: italic;
+      .loader {
+        width: 40px;
+        height: 40px;
+        border: 5px solid #505050;
+        border-bottom-color: transparent;
+        border-radius: 50%;
+        display: inline-block;
+        box-sizing: border-box;
+        animation: rotation 1s linear infinite;
+      }
+      @keyframes rotation {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       .info {
@@ -118,18 +129,21 @@
       }
     </style>
   </head>
+
   <body>
     <div class="container">
       <h1>🏔️ Terrain Generator</h1>
 
       <div class="info">
         <strong>About:</strong> This tool generates realistic terrain heightmaps
-        using the
+        using the classic
         <a
           href="https://en.wikipedia.org/wiki/Diamond-square_algorithm"
           target="_blank"
-          >Diamond-Square algorithm</a
-        >. <br />Adjust the 'smoothness' to control terrain roughness. The
+        >
+          Diamond-Square algorithm
+        </a>
+        <br />Adjust the 'smoothness' to control terrain roughness. The
         'erosion' param to control elevation distribution, and use different
         seeds for varied landscapes.
       </div>
@@ -146,7 +160,7 @@
             min="1.2"
             max="2.3"
             step="0.01"
-            value="1.85"
+            value="1.75"
           />
         </div>
 
@@ -164,7 +178,7 @@
             value="1.8"
           />
         </div>
-        <br />
+
         <div class="control-group">
           <label for="seed">Seed:</label>
           <div class="seed-controls">
@@ -174,13 +188,19 @@
               value="7431898631184268366"
               style="width: 200px"
             />
-            <button>Random</button>
+            <button id="randSeedBtn">Random</button>
           </div>
         </div>
 
         <div class="control-group">
           <label for="generateBtn">&nbsp;</label>
-          <button id="generateBtn">Generate Terrain</button>
+          <button id="generateBtn">Generate</button>
+        </div>
+
+        <div class="control-group">
+          <div class="loading" id="loadingMessage">
+            <span class="loader"></span>
+          </div>
         </div>
       </div>
 
@@ -233,6 +253,17 @@
       async function handleGenerateTerrain() {
         console.log("Generating terrain...");
 
+        // Show loading message
+        const loadingMessage = document.getElementById("loadingMessage");
+        const terrainImage = document.getElementById("terrainImage");
+        const generateBtn = document.getElementById("generateBtn");
+        const randomSeedBtn = document.getElementById("randSeedBtn");
+
+        loadingMessage.style.display = "inline";
+        // terrainImage.style.display = "none";
+        generateBtn.disabled = true;
+        randomSeedBtn.disabled = true;
+
         const seed = parseFloat(document.getElementById("seed").value);
         const roughness = parseFloat(
           document.getElementById("roughness").value
@@ -241,10 +272,15 @@
 
         if (isNaN(seed) || isNaN(roughness) || isNaN(power)) {
           alert("Please enter valid numbers for seed, roughness, and power");
+          loadingMessage.style.display = "none";
+          generateBtn.disabled = false;
           return;
         }
 
         try {
+          // Use setTimeout to allow DOM updates to render before calling WASM
+          await new Promise((resolve) => setTimeout(resolve, 30));
+
           // Call the Go WASM function
           const imageData = window.generateTerrain(seed, roughness, power);
 
@@ -259,12 +295,15 @@
         } catch (error) {
           console.error("Error generating terrain:", error);
           alert("Error generating terrain: " + error.message);
+        } finally {
+          // Hide loading message and re-enable button
+          loadingMessage.style.display = "none";
+          generateBtn.disabled = false;
+          randomSeedBtn.disabled = false;
         }
       }
 
       function handleRandomSeed() {
-        console.log("Generating random seed...");
-
         try {
           // Store reference to avoid recursive call
           const wasmGenerateRandomSeed = window.generateRandomSeed;

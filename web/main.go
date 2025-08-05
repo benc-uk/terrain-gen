@@ -37,7 +37,7 @@ func generateTerrain(this js.Value, args []js.Value) interface{} {
 	power := args[2].Float()
 
 	// Generate heightmap using DiamondSquare algorithm
-	data := generation.DiamondSquare(9, seed, roughness)
+	data := generation.DiamondSquare(10, seed, roughness)
 
 	// Post-process the data
 	postprocess.Normalize(data)
