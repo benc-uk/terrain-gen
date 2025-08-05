@@ -25,7 +25,7 @@ func classicTerrainGrad() (*colorgrad.Gradient, error) {
 			// snow white
 			colorgrad.Rgb8(255, 255, 255, 255),
 		).
-		Domain(0.09, 0.12, 0.125, 0.18, 0.4, 0.55, 0.82, 0.99).
+		Domain(0.09, 0.12, 0.125, 0.15, 0.3, 0.55, 0.82, 0.99).
 		Build()
 
 	if err != nil {

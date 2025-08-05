@@ -33,3 +33,5 @@ go.work.sum
 
 tmp/
 bin/
+junk/
+output/

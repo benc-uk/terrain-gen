@@ -21,7 +21,7 @@ func main() {
 
 	seed := uint64(7431898631184268366) //rand.Uint64()
 	log.Printf("Using seed: %d\n", seed)
-	data := generation.DiamondSquare(8, seed, 1.9)
+	data := generation.DiamondSquare(9, seed, 1.85)
 
 	log.Printf("Heightmap size: %d x %d\n", len(data), len(data[0]))
 
@@ -33,7 +33,7 @@ func main() {
 		log.Fatal("Failed to create gradient:", err)
 	}
 
-	err = saveAsPNG(data, "heightmap.png", grad)
+	err = saveAsPNG(data, "output/heightmap.png", grad)
 	if err != nil {
 		log.Fatal("Failed to save PNG:", err)
 	}
