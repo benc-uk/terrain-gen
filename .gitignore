@@ -35,3 +35,4 @@ tmp/
 bin/
 junk/
 output/
+web/main.wasm
