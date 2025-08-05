@@ -2,44 +2,60 @@ package main
 
 import (
 	"image"
-	"image/color"
 	"image/png"
 	"log"
 	"os"
-	"terrain-gen/pkg/algo"
+	"terrain-gen/pkg/generation"
+	"terrain-gen/pkg/postprocess"
+
+	"github.com/mazznoer/colorgrad"
 )
 
-func main() {
-	const width, height = 256, 256
+// convert to a BW png image the data in range [0, 1]
+// and save it to a file
 
-	// Create a colored image of the given width and height.
-	img := image.NewNRGBA(image.Rect(0, 0, width, height))
+func main() {
+	//uint64(10669432156977387813)
+	//uint64(17288593777797703085)
+	//uint64(7431898631184268366)
+
+	seed := uint64(7431898631184268366) //rand.Uint64()
+	log.Printf("Using seed: %d\n", seed)
+	data := generation.DiamondSquare(8, seed, 1.9)
+
+	log.Printf("Heightmap size: %d x %d\n", len(data), len(data[0]))
+
+	postprocess.Normalize(data)
+	postprocess.Power(data, 1.8)
+
+	grad, err := classicTerrainGrad()
+	if err != nil {
+		log.Fatal("Failed to create gradient:", err)
+	}
+
+	err = saveAsPNG(data, "heightmap.png", grad)
+	if err != nil {
+		log.Fatal("Failed to save PNG:", err)
+	}
+}
+
+func saveAsPNG(data [][]float64, filename string, grad *colorgrad.Gradient) error {
+	width := len(data)
+	height := len(data[0])
+
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			img.Set(x, y, color.NRGBA{
-				R: uint8((x + y) & 255),
-				G: uint8((x + y) << 2 & 255),
-				B: uint8((x + y) << 2 & 255),
-				A: 255,
-			})
+			img.Set(x, y, grad.At(data[x][y]))
 		}
 	}
 
-	f, err := os.Create("image.png")
+	file, err := os.Create(filename)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	defer file.Close()
 
-	if err := png.Encode(f, img); err != nil {
-		f.Close()
-		log.Fatal(err)
-	}
-
-	if err := f.Close(); err != nil {
-		log.Fatal(err)
-	}
-
-	data := algo.DiamondSquare(3, 9842392)
-	log.Printf("%+v", data)
+	return png.Encode(file, img)
 }
