@@ -11,6 +11,7 @@ import (
 	"math/rand/v2"
 	"syscall/js"
 	"terrain-gen/pkg/generation"
+	"terrain-gen/pkg/gradients"
 	"terrain-gen/pkg/postprocess"
 
 	"github.com/mazznoer/colorgrad"
@@ -26,25 +27,31 @@ func main() {
 	<-c
 }
 
-func generateTerrain(this js.Value, args []js.Value) interface{} {
-	if len(args) < 3 {
-		return "Error: Need seed, roughness, and power parameters"
+func generateTerrain(this js.Value, args []js.Value) any {
+	if len(args) < 4 {
+		return "Error: Need seed, roughness, power & size parameters"
 	}
 
 	// Parse parameters from JavaScript
 	seed := uint64(args[0].Float())
 	roughness := args[1].Float()
 	power := args[2].Float()
+	large := args[3].Bool()
+
+	size := 9
+	if large {
+		size = 10
+	}
 
 	// Generate heightmap using DiamondSquare algorithm
-	data := generation.DiamondSquare(10, seed, roughness)
+	data := generation.DiamondSquare(size, seed, roughness)
 
 	// Post-process the data
 	postprocess.Normalize(data)
 	postprocess.Power(data, power)
 
 	// Create gradient
-	grad, err := classicTerrainGrad()
+	grad, err := gradients.ClassicTerrain()
 	if err != nil {
 		return "Error creating gradient: " + err.Error()
 	}
@@ -82,35 +89,4 @@ func createPNGData(data [][]float64, grad *colorgrad.Gradient) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
-}
-
-func classicTerrainGrad() (*colorgrad.Gradient, error) {
-	var err error
-	grad, err := colorgrad.NewGradient().
-		Colors(
-			// Dark blue for water
-			colorgrad.Rgb8(0, 0, 128, 255),
-			// light blue for shallow water
-			colorgrad.Rgb8(100, 130, 200, 255),
-			// Sand color
-			colorgrad.Rgb8(220, 180, 140, 255),
-			// light grass
-			colorgrad.Rgb8(50, 139, 50, 255),
-			// dark grass
-			colorgrad.Rgb8(50, 100, 24, 255),
-			// stone rock gray
-			colorgrad.Rgb8(50, 60, 70, 255),
-			// dark rock gray
-			colorgrad.Rgb8(110, 95, 110, 255),
-			// snow white
-			colorgrad.Rgb8(255, 255, 255, 255),
-		).
-		Domain(0.09, 0.12, 0.125, 0.15, 0.3, 0.55, 0.82, 0.99).
-		Build()
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &grad, nil
 }
