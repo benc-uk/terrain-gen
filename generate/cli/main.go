@@ -31,6 +31,8 @@ func main() {
 	seed := flag.Uint64("seed", 0, "Random seed for terrain generation (0 for random seed)")
 	smooth := flag.Float64("smooth", 1.78, "Smoothing factor for the terrain generation")
 	erosion := flag.Float64("erosion", 1.9, "Erosion factor for the terrain generation (not implemented yet)")
+	encodeHeightAsAlpha := flag.Bool("heightAlpha", false, "Encode height as alpha in the output image (not implemented yet)")
+
 	flag.Parse()
 
 	if *size < 1 || *size > 12 {
@@ -54,14 +56,14 @@ func main() {
 	// Three really important post-processing steps
 	postprocess.Normalize(data)
 	postprocess.Power(data, *erosion)
-	postprocess.SeaLevel(data, 0.091)
+	postprocess.SeaLevel(data, 0.1)
 
 	grad, err := gradients.ClassicTerrain()
 	if err != nil {
 		log.Fatal("Failed to create gradient:", err)
 	}
 
-	img := mapToImage(data, grad, false)
+	img := mapToImage(data, grad, *encodeHeightAsAlpha)
 	err = saveAsPNG(img, *outFile)
 	if err != nil {
 		log.Fatal("Failed to save image:", err)
