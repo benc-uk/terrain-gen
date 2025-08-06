@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 [build]
 args_bin = []
 bin = "./tmp/main"
-cmd = "go build -o ./tmp/main terrain-gen/terrain"
+cmd = "go build -o ./tmp/main github.com/benc-uk/terrain-gen/generate/cli"
 delay = 200
 exclude_dir = ["junk", "tmp", "vendor"]
 

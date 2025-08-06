@@ -35,4 +35,7 @@ tmp/
 bin/
 junk/
 output/
-web/main.wasm
+
+# WASM files
+**/main.wasm
+**/wasm_exec.js

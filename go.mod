@@ -1,4 +1,4 @@
-module terrain-gen
+module github.com/benc-uk/terrain-gen
 
 go 1.24.5
 

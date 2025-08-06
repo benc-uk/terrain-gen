@@ -10,9 +10,10 @@ import (
 	"image/png"
 	"math/rand/v2"
 	"syscall/js"
-	"terrain-gen/pkg/generation"
-	"terrain-gen/pkg/gradients"
-	"terrain-gen/pkg/postprocess"
+
+	"github.com/benc-uk/terrain-gen/pkg/generation"
+	"github.com/benc-uk/terrain-gen/pkg/gradients"
+	"github.com/benc-uk/terrain-gen/pkg/postprocess"
 
 	"github.com/mazznoer/colorgrad"
 )
