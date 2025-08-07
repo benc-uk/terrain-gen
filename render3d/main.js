@@ -40,26 +40,10 @@ async function loadHeightmap(imagePath) {
   })
 }
 
-// Initialize GSOTS3D
-const gsots = await Context.init('canvas')
-
-try {
-  // Load the heightmap
-  const heightmap = await loadHeightmap(MAP)
-  console.log(`Loaded heightmap: ${heightmap.width}x${heightmap.height}`)
-
-  // Create terrain mesh using MULTIPLE PARTS
-  const builder = new ModelBuilder()
-  const terrainMap = Material.createBasicTexture(MAP)
-
-  const { width, height, heights } = heightmap
-
-  // Divide terrain into chunks to force proper distribution
-
-  let totalTriangles = 0
-
-  for (let chunkY = 0; chunkY < Math.ceil(height / CHUNK_SIZE); chunkY++) {
-    for (let chunkX = 0; chunkX < Math.ceil(width / CHUNK_SIZE); chunkX++) {
+// Function to create the terrain model
+function makeModel(width, height, heights, name = 'terrain') {
+  for (let chunkY = 0; chunkY < height; chunkY++) {
+    for (let chunkX = 0; chunkX < width; chunkX++) {
       // Create a separate part for each chunk
       const part = builder.newPart(`terrain_${chunkX}_${chunkY}`, terrainMap)
 
@@ -79,7 +63,7 @@ try {
           const h3 = heights[(row + 1) * width + col] * HSCALE
           const h4 = heights[(row + 1) * width + (col + 1)] * HSCALE
 
-          // Calculate world positions - spread across full map
+          // Calculate world positions
           const x1 = col
           const x2 = col + 1
           const z1 = row
@@ -100,80 +84,91 @@ try {
           // Add two triangles to form the quad
           part.addTriangle(v1, v3, v2, [u1, v1Tex], [u1, v2Tex], [u2, v1Tex])
           part.addTriangle(v2, v3, v4, [u2, v1Tex], [u1, v2Tex], [u2, v2Tex])
-          totalTriangles += 2
         }
       }
-
-      console.log(`Chunk [${chunkX},${chunkY}] has ${part.triangleCount} triangles`)
     }
   }
 
-  console.log(`Generated terrain with ${totalTriangles} triangles across multiple parts`)
-  console.log(`Terrain bounds: X[0 to ${width - 1}], Z[0 to ${height - 1}]`)
-
-  // Build the model
-  gsots.buildCustomModel(builder, 'terrain')
-  gsots.createModelInstance('terrain')
-
-  // Set up camera and lighting - position camera based on terrain size
-  const maxDimension = Math.max(width, height)
-  gsots.camera.position = [maxDimension / 2, 40, maxDimension / 2]
-  gsots.camera.enableFPControls(3.2, 0, 0.0005, 4, true)
-  gsots.camera.far = maxDimension * 3
-
-  const sunRadius = 1500
-  let timeOfDay = 2
-  gsots.globalLight.ambient = [0.2, 0.2, 0.2]
-  gsots.globalLight.colour = [1.2, 1.2, 1.2] // Brighter sun
-  gsots.globalLight.enableShadows({
-    distance: 18000,
-    zoom: 300,
-  })
-
-  window.addEventListener('keydown', (event) => {
-    if (event.key === '1') {
-      timeOfDay -= 0.05
-    }
-    if (event.key === '2') {
-      timeOfDay += 0.05
-    }
-
-    if (timeOfDay > Math.PI * 2) timeOfDay = Math.PI * 2
-
-    console.log(`Time of day: ${timeOfDay.toFixed(2)}`)
-    console.log(`Sun position: [${gsots.globalLight.position}]`)
-  })
-
-  gsots.update = () => {
-    // Position sun in a circular orbit based on timeOfDay
-    timeOfDay += 0.0003 // Slowly rotate sun position over time
-
-    // Calculate sun position with an arch over the sky
-    const sunX = Math.cos(timeOfDay) * sunRadius
-    const sunY = Math.abs(Math.sin(timeOfDay)) * sunRadius * 0.8 // abs to create an arch
-    const sunZ = Math.sin(timeOfDay) * sunRadius
-
-    gsots.globalLight.setAsPosition(sunX, sunY, sunZ)
-
-    // Adjust light color based on time of day (redder at sunset/sunrise)
-    const dayProgress = Math.sin(timeOfDay)
-    const sunsetFactor = Math.pow(Math.abs(Math.sin(timeOfDay + Math.PI / 2)), 8)
-
-    if (dayProgress > 0) {
-      // Daytime - full brightness
-      gsots.globalLight.colour = [1.2 - sunsetFactor * 0.4, 1.2 - sunsetFactor * 0.8, 1.2 - sunsetFactor * 0.9]
-      gsots.globalLight.ambient = [0.2 + 0.1 * dayProgress, 0.2 + 0.1 * dayProgress, 0.2 + 0.1 * dayProgress]
-    } else {
-      // Night time - dimmer light
-      gsots.globalLight.colour = [0.3, 0.3, 0.4]
-      gsots.globalLight.ambient = [0.05, 0.05, 0.1]
-    }
-  }
-
-  // Add a skybox as environment
-  gsots.setEnvmap(true, 'skybox/right.png', 'skybox/left.png', 'skybox/top.png', 'skybox/bottom.png', 'skybox/front.png', 'skybox/back.png')
-
-  gsots.start()
-} catch (error) {
-  console.error('Error:', error)
+  gsots.buildCustomModel(builder, name)
 }
+
+// Initialize GSOTS3D
+const gsots = await Context.init('canvas')
+
+// Load the heightmap
+const heightmap = await loadHeightmap(MAP)
+console.log(`Loaded heightmap: ${heightmap.width}x${heightmap.height}`)
+
+// Create terrain mesh using MULTIPLE PARTS
+const builder = new ModelBuilder()
+const terrainMap = Material.createBasicTexture(MAP)
+
+const { width, height, heights } = heightmap
+makeModel(width, height, heights, 'terrain')
+gsots.createModelInstance('terrain')
+
+// Set up camera and lighting - position camera based on terrain size
+const size = Math.max(width, height)
+gsots.camera.position = [size / 2, 40, size / 2]
+gsots.camera.enableFPControls(3.2, 0, 0.0005, 4, true)
+gsots.camera.far = size * 8
+
+const sunRadius = 1500
+let timeOfDay = 2
+let direction = 1 // 1 for day, -1 for night
+gsots.globalLight.ambient = [0.2, 0.2, 0.2]
+gsots.globalLight.colour = [1.2, 1.2, 1.2] // Brighter sun
+gsots.globalLight.enableShadows({
+  distance: 18000,
+  zoom: 300,
+})
+
+const sunMat = Material.createSolidColour(1, 1, 1)
+sunMat.emissive = [1.2, 1.2, 1.2] // Bright sun color
+const sun = gsots.createSphereInstance(sunMat, 40, 32, 32)
+sun.castShadow = false
+
+window.addEventListener('keydown', (event) => {
+  if (event.key === '1') {
+    timeOfDay -= 0.05
+  }
+  if (event.key === '2') {
+    timeOfDay += 0.05
+  }
+
+  console.log(`Time of day: ${timeOfDay.toFixed(2)}`)
+})
+
+gsots.update = () => {
+  // Position sun in a circular orbit based on timeOfDay
+  timeOfDay += 0.0003 * direction // Slowly rotate sun position over time
+  if (timeOfDay > Math.PI * 2) direction = -1 // Reverse direction at end of day
+  if (timeOfDay < 0) direction = 1 // Reverse direction at start
+
+  // Calculate sun position with an arch over the sky
+  const sunX = Math.cos(timeOfDay) * sunRadius
+  const sunY = Math.abs(Math.sin(timeOfDay)) * sunRadius * 0.8 // abs to create an arch
+  const sunZ = Math.sin(timeOfDay) * sunRadius
+
+  gsots.globalLight.setAsPosition(sunX, sunY, sunZ)
+  sun.position = [sunX, sunY, sunZ]
+
+  // Adjust light color based on time of day (redder at sunset/sunrise)
+  const dayProgress = Math.sin(timeOfDay)
+  const sunsetFactor = Math.pow(Math.abs(Math.sin(timeOfDay + Math.PI / 2)), 8)
+
+  if (dayProgress > 0) {
+    // Daytime - full brightness
+    gsots.globalLight.colour = [1.2 - sunsetFactor * 0.4, 1.2 - sunsetFactor * 0.8, 1.2 - sunsetFactor * 0.9]
+    gsots.globalLight.ambient = [0.2 + 0.1 * dayProgress, 0.2 + 0.1 * dayProgress, 0.2 + 0.1 * dayProgress]
+  } else {
+    // Night time - dimmer light
+    gsots.globalLight.colour = [0.3, 0.3, 0.4]
+    gsots.globalLight.ambient = [0.05, 0.05, 0.1]
+  }
+}
+
+// Add a skybox
+gsots.setEnvmap(true, 'skybox/right.png', 'skybox/left.png', 'skybox/top.png', 'skybox/bottom.png', 'skybox/front.png', 'skybox/back.png')
+
+gsots.start()

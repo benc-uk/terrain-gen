@@ -22,8 +22,20 @@ web-build: # Build the web application (WASM)
 	GOOS=js GOARCH=wasm go build -o generate/web/public/main.wasm generate/web/main.go
 
 web-serve: web-build # Serve the web application
-	@echo "Starting web server on http://localhost:8080"
-	@cd generate/web/public && python3 -m http.server 8080 --bind 127.0.0.1
+	@echo "Starting web server on http://localhost:8000"
+	@cd generate/web/public && python3 -m http.server 8000 --bind 127.0.0.1
+
+render-serve: # Serve the render3d application
+	@echo "Starting render3d server on http://localhost:3000"
+	@cd render3d && python3 -m http.server 3000 --bind 127.0.0.1
+
+voxel-serve: # Serve the render3d application
+	@echo "Starting voxel server on http://localhost:3000"
+	@cd voxel && python3 -m http.server 3000 --bind 127.0.0.1
+
 
 web: web-build web-serve # Build and serve the web application
 
+clean: # Clean up generated files
+	@echo "Cleaning up generated files..."
+	find . -name output -exec rm -rf {} \;

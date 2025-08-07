@@ -1,7 +1,7 @@
 {
   "cSpell.words": ["heightmap", "Heightmap"],
-  "prettier.configPath": ".dev/.prettierrc",
-  "eslint.options": {
-    "overrideConfigFile": ".dev/eslint.config.mjs"
-  }
+  "prettier.configPath": ".dev/.prettierrc"
+  // "eslint.options": {
+  //   "overrideConfigFile": ".dev/eslint.config.mjs"
+  // }
 }
