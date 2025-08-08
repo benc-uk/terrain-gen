@@ -1,107 +1,114 @@
 //@ts-check
 import { CanvasBlitter } from './lib/canvas-blitter.js'
 import { loadImageData } from './lib/images.js'
+import { HeightmapAlpha } from './heightmap.js'
+import { Camera } from './camera.js'
+import { Controls } from './controls.js'
 
-/** @type {ImageData} */
+/** @type {HeightmapAlpha} */
 let terrainMap
 
 /** @type {CanvasBlitter} */
 let blitter
 
-// Player position and angle
-let posX = 128
-let posY = 128
-let angle = -1.8
-let horizon = 256 // Height of the horizon line in pixels
+/** @type {Camera} */
+let camera
 
-const MAX_DIST = 300
-const HEIGHT_SCALE = 500
+/** @type {Controls} */
+let controls
+
+const MAX_DIST = 1000
+const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
+const Z_LOD_FACTOR = 7 / MAX_DIST
+const HEIGHT_SCALE = 700
 
 async function init() {
-  terrainMap = await loadImageData('map.png')
+  // const mapImageData = await loadImageData('map.png')
+
+  // Special case for Comanche maps
+  const mapImageData = await loadImageData('maps/C7W.png')
+  const heightImageData = await loadImageData('maps/D7.png')
+  // Update mapImageData to use heightmap alpha
+  for (let i = 0; i < mapImageData.data.length; i += 4) {
+    mapImageData.data[i + 3] = heightImageData.data[i] // Use alpha channel from heightmap
+  }
+
+  terrainMap = new HeightmapAlpha(mapImageData)
 
   blitter = new CanvasBlitter()
   blitter.showFPS = true
 
-  window.addEventListener('keydown', (e) => {
-    // W,A,S,D keys control movement
-    const key = e.key.toUpperCase()
-    if (key === 'A') {
-      angle -= 0.1
-    } else if (key === 'D') {
-      angle += 0.1
-    } else if (key === 'W') {
-      posX += Math.cos(angle) * 3
-      posY += Math.sin(angle) * 3
-    } else if (key === 'S') {
-      posX -= Math.cos(angle) * 3
-      posY -= Math.sin(angle) * 3
-    }
+  camera = new Camera(terrainMap.width / 2, terrainMap.height / 2, 200, -3.4, blitter.height / 3)
+  controls = new Controls()
 
-    // R,F look up/down
-    if (key === 'R') {
-      horizon += 20
-    } else if (key === 'F') {
-      horizon -= 20
-    }
-  })
-
-  posX = terrainMap.width / 2
-  posY = terrainMap.height / 2
-
+  // Start the rendering loop
   renderLoop(performance.now())
 }
 
 function drawTerrain() {
-  blitter.fill(100, 180, 235) // Darker sky blue
-
-  const fov = Math.PI / 2.5
-  const leftAngle = angle - fov / 2
-  const rightAngle = angle + fov / 2
+  const leftAngle = camera.angle - camera.fov / 2
+  const rightAngle = camera.angle + camera.fov / 2
 
   const heightBuffer = new Array(blitter.width).fill(blitter.height)
 
-  // Place the camera at the terrain height
-  const terrainIndexPos = (Math.floor(posY) * terrainMap.width + Math.floor(posX)) * 4
-  const terrainDataPos = terrainMap.data.slice(terrainIndexPos, terrainIndexPos + 4)
-  const camHeight = terrainDataPos[3] + 20 // Adjust camera height based on terrain data
-
-  for (let z = 1; z < MAX_DIST; z++) {
+  let z = 1
+  let dz = 1 //Z_LOD_FACTOR
+  while (z < MAX_DIST) {
     const plLeft = {
-      x: posX + Math.cos(leftAngle) * z,
-      y: posY + Math.sin(leftAngle) * z,
+      x: camera.x + Math.cos(leftAngle) * z,
+      y: camera.y + Math.sin(leftAngle) * z,
     }
     const plRight = {
-      x: posX + Math.cos(rightAngle) * z,
-      y: posY + Math.sin(rightAngle) * z,
+      x: camera.x + Math.cos(rightAngle) * z,
+      y: camera.y + Math.sin(rightAngle) * z,
     }
 
     let dx = (plRight.x - plLeft.x) / blitter.width
     let dy = (plRight.y - plLeft.y) / blitter.width
 
     const invz = (1 / z) * HEIGHT_SCALE
-    const lightDistance = Math.min(1 / (z * 0.01), 1) // Adjust light distance based on z
+    const lightAtten = Math.min(1 / (z * LIGHT_ATTEN_FACTOR), 1)
 
     for (let i = 0; i < blitter.width; i++) {
       let worldX = plLeft.x + dx * i
       let worldY = plLeft.y + dy * i
 
-      const terrainIndex = (Math.floor(worldY) * terrainMap.width + Math.floor(worldX)) * 4
-      const colour = terrainMap.data.slice(terrainIndex, terrainIndex + 4)
-      if (!colour[3]) continue
+      const colour = terrainMap.getColor(worldX, worldY)
+      const h = terrainMap.getHeight(worldX, worldY)
 
       // The floor function here is VERY important
-      const height = Math.floor((camHeight - colour[3]) * invz + horizon)
+      const height = Math.floor((camera.z - h) * invz + camera.horizon)
 
       // Draw vertical column
-      blitter.drawVLine(i, height, heightBuffer[i], colour[0] * lightDistance, colour[1] * lightDistance, colour[2] * lightDistance)
+      blitter.drawVLine(i, height, heightBuffer[i], colour[0] * lightAtten, colour[1] * lightAtten, colour[2] * lightAtten)
 
       if (height < heightBuffer[i]) heightBuffer[i] = height
     }
+
+    z += dz
+    dz += Z_LOD_FACTOR
+  }
+}
+
+function updateCamera() {
+  if (controls.turn !== 0) {
+    camera.angle += controls.turn * 0.02
+  }
+
+  if (controls.move !== 0) {
+    camera.x += Math.cos(camera.angle) * 6 * controls.move
+    camera.y += Math.sin(camera.angle) * 6 * controls.move
+  }
+
+  if (controls.lookAngle !== 0) {
+    camera.horizon -= controls.lookAngle * 5
   }
 }
 
 function renderLoop(ts) {
+  updateCamera()
+
+  blitter.fill(100, 180, 235) // Sky blue
   drawTerrain()
 
   blitter.draw(ts)
