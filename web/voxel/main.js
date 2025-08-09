@@ -1,6 +1,6 @@
 //@ts-check
 import { CanvasBlitter } from './lib/canvas-blitter.js'
-import { loadImageData, loadImageFromStorage } from './lib/images.js'
+import { loadImageFromStorage } from './lib/images.js'
 import { HeightmapAlpha } from './heightmap.js'
 import { Camera } from './camera.js'
 import { Controls } from './controls.js'
@@ -17,9 +17,9 @@ let camera
 /** @type {Controls} */
 let controls
 
-const MAX_DIST = 1000
+const MAX_DIST = 1400
 const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
-const Z_LOD_FACTOR = 7 / MAX_DIST
+const Z_LOD_FACTOR = 12 / MAX_DIST
 const HEIGHT_SCALE = 700
 
 async function init() {
@@ -92,44 +92,10 @@ function drawTerrain() {
   }
 }
 
-function updateCamera() {
-  const MIN_GROUND_HEIGHT = 15
-
-  if (controls.turn !== 0) {
-    camera.angle += controls.turn * 0.02
-  }
-
-  if (controls.move !== 0) {
-    camera.x += Math.cos(camera.angle) * 6 * controls.move
-    camera.y += Math.sin(camera.angle) * 6 * controls.move
-    // use lookAngle to adjust camera height
-    camera.z += camera.vAngle * 6 * controls.move
-  }
-
-  if (controls.lookAngle !== 0) {
-    camera.horizon -= controls.lookAngle * 5
-    camera.vAngle -= controls.lookAngle * 0.01
-  }
-
-  if (controls.moveUpDown !== 0) {
-    camera.z += controls.moveUpDown * 6
-  }
-
-  if (camera.horizon < 0) {
-    camera.horizon = 0
-  }
-
-  // check collision with terrain
-  const terrainHeight = terrainMap.getHeight(camera.x, camera.y)
-  if (camera.z < terrainHeight + MIN_GROUND_HEIGHT) {
-    camera.z = terrainHeight + MIN_GROUND_HEIGHT
-  }
-}
-
 function renderLoop(ts) {
-  updateCamera()
+  camera.update(terrainMap, controls)
 
-  blitter.fill(100, 180, 235) // Sky blue
+  blitter.fillGradient(190, 210, 255, 0, 0, 20) // Sky gradient
   drawTerrain()
 
   blitter.draw(ts)

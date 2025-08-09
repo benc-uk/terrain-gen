@@ -45,6 +45,16 @@ func generateTerrain(this js.Value, args []js.Value) any {
 	// Generate heightmap using DiamondSquare algorithm
 	data := generation.DiamondSquare(10, seed, roughness)
 
+	// remove the first row and column to make it square
+	// if len(data) > 0 {
+	// 	data = data[1:]
+	// 	for i := range data {
+	// 		if len(data[i]) > 0 {
+	// 			data[i] = data[i][1:]
+	// 		}
+	// 	}
+	// }
+
 	// Three really important post-processing steps to eliminate height spikes
 	postprocess.Normalize(data)
 	postprocess.Power(data, erosion)
