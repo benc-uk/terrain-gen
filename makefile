@@ -1,6 +1,6 @@
 # Makefile for Terrain Generation Project
 
-.PHONY: help run watch build-web serve-web web
+.PHONY: help run watch web-build web-serve web clean cli-run
 
 DEFAULT: help
 
