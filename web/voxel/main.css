@@ -20,6 +20,7 @@ button {
   cursor: pointer;
   font-size: 14px;
   transition: background-color 0.3s;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.45);
 }
 
 button:hover {

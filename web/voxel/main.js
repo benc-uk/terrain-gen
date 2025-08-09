@@ -17,7 +17,7 @@ let camera
 /** @type {Controls} */
 let controls
 
-const MAX_DIST = 1400
+const MAX_DIST = 1200
 const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
 const Z_LOD_FACTOR = 12 / MAX_DIST
 const HEIGHT_SCALE = 700
@@ -68,21 +68,21 @@ function drawTerrain() {
     let dx = (plRight.x - plLeft.x) / blitter.width
     let dy = (plRight.y - plLeft.y) / blitter.width
 
-    const invz = (1 / z) * HEIGHT_SCALE
+    const invZ = (1 / z) * HEIGHT_SCALE
     const lightAtten = Math.min(1 / (z * LIGHT_ATTEN_FACTOR), 1)
 
     for (let i = 0; i < blitter.width; i++) {
       let worldX = plLeft.x + dx * i
       let worldY = plLeft.y + dy * i
 
-      const colour = terrainMap.getColor(worldX, worldY)
-      const h = terrainMap.getHeight(worldX, worldY)
+      const terrain = terrainMap.getData(worldX, worldY)
 
       // The floor function here is VERY important
-      const height = Math.floor((camera.z - h) * invz + camera.horizon)
+      const height = Math.floor((camera.z - terrain[3]) * invZ + camera.horizon)
 
       // Draw vertical column
-      blitter.drawVLine(i, height, heightBuffer[i], colour[0] * lightAtten, colour[1] * lightAtten, colour[2] * lightAtten)
+      if (height > heightBuffer[i]) continue
+      blitter.drawVLine(i, height, heightBuffer[i], terrain[0] * lightAtten, terrain[1] * lightAtten, terrain[2] * lightAtten)
 
       if (height < heightBuffer[i]) heightBuffer[i] = height
     }

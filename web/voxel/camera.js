@@ -57,9 +57,9 @@ export class Camera {
     }
 
     // check collision with terrain
-    const terrainHeight = terrainMap.getHeight(this.x, this.y)
-    if (this.z < terrainHeight + MIN_GROUND_HEIGHT) {
-      this.z = terrainHeight + MIN_GROUND_HEIGHT
+    const data = terrainMap.getData(this.x, this.y)
+    if (this.z < data[3] + MIN_GROUND_HEIGHT) {
+      this.z = data[3] + MIN_GROUND_HEIGHT
     }
   }
 }

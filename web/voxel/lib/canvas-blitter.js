@@ -30,11 +30,13 @@ export class CanvasBlitter {
   /** @type {number} */
   #height
 
-  /** @type {number | undefined} */
-  #lastFrameTime
+  /** @type {number} */
+  #lastFrameTime = 0
 
   /** @type {number | undefined} */
   #fps
+
+  #frameTimeBucket = []
 
   /**
    * Creates an instance of CanvasBlitter.
@@ -83,23 +85,20 @@ export class CanvasBlitter {
    * @param {number} [ts] - Optional timestamp for the frame, useful for FPS calculation.
    * @returns {void}
    */
-  draw(ts) {
+  draw(ts = 0) {
     this.#imageData.data.set(this.#buffer)
     this.#ctx.putImageData(this.#imageData, 0, 0)
 
     if (this.showFPS) {
       this.#ctx.fillText(`FPS: ${this.#fps}`, 10, 30)
-    }
-    if (ts) {
-      if (!this.#lastFrameTime) {
-        this.#lastFrameTime = ts
-      } else {
-        const delta = ts - this.#lastFrameTime
-        this.#fps = Math.round(1000 / delta)
-        this.#lastFrameTime = ts
+
+      const frameTime = ts - this.#lastFrameTime
+      this.#frameTimeBucket.push(frameTime)
+      if (this.#frameTimeBucket.length > 60) {
+        this.#frameTimeBucket.shift()
       }
-    } else {
-      this.#fps = 0
+      this.#fps = Math.round(1000 / (this.#frameTimeBucket.reduce((a, b) => a + b, 0) / this.#frameTimeBucket.length))
+      this.#lastFrameTime = ts
     }
   }
 
