@@ -10,6 +10,9 @@ export class Camera {
   angle = 0
 
   /** @type {number} */
+  vAngle = 0 // Vertical angle for looking up/down
+
+  /** @type {number} */
   horizon = 0
 
   fov = Math.PI / 2 // Field of view in radians

@@ -40,7 +40,7 @@ export class HeightmapAlpha {
     y = ((y % this.#height) + this.#height) % this.#height
 
     const index = (y * this.#width + x) * 4
-    return this.#data[index + 3] // Return the alpha channel as height
+    return this.#data[index + 3] // Alpha channel contains height
   }
 
   /**

@@ -20,10 +20,8 @@ import (
 	"github.com/mazznoer/colorgrad"
 )
 
-// Some nice looking seeds
-//uint64(10669432156977387813)
-//uint64(17288593777797703085)
-//uint64(7431898631184268366)
+const AMBIENT = 0.2 // Ambient light component
+const DIFFUSE = 4.5 // Diffuse light component multiplier
 
 func main() {
 	size := flag.Int("size", 9, "Size of the terrain map (2^size x 2^size)")
@@ -66,7 +64,7 @@ func main() {
 	// Three really important post-processing steps
 	postprocess.Normalize(data)
 	postprocess.Power(data, *erosion)
-	postprocess.BoxBlur(data, 4)
+	postprocess.BoxBlur(data, 3)
 	postprocess.SeaLevel(data, 0.1)
 
 	grad, err := gradients.ClassicTerrain()
@@ -74,7 +72,7 @@ func main() {
 		log.Fatal("Failed to create gradient:", err)
 	}
 
-	img := mapToImage(data, grad, *encodeHeightAsAlpha)
+	img := renderImage(data, grad, *encodeHeightAsAlpha)
 
 	err = saveAsPNG(img, *outFile)
 	if err != nil {
@@ -82,8 +80,8 @@ func main() {
 	}
 }
 
-// mapToImage converts a 2D heightmap to an RGBA image using the provided color gradient.
-func mapToImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool) *image.RGBA {
+// renderImage converts a 2D heightmap to an RGBA image using the provided color gradient.
+func renderImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool) *image.RGBA {
 	width := len(data)
 	height := len(data[0])
 
@@ -92,21 +90,12 @@ func mapToImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool) 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			h := data[x][y]
+
+			// Get pixel color from gradient
 			color := grad.At(h)
 
-			// if h > 0.13 {
-			// 	// Add a subtle noise effect to the color
-			// 	noise := (rand.Float64() - 0.5) * 0.3 // Reduced noise range to -0.015 to 0.015
-			// 	noiseFactor := 1.0 + noise            // Use 1.0 + noise to create small variations
-
-			// 	// Apply noise while keeping values in valid range
-			// 	color.R = color.R * noiseFactor
-			// 	color.G = color.G * noiseFactor
-			// 	color.B = color.B * noiseFactor
-			// }
-
 			// Calculate normal vector
-			nx, ny, nz := 0.0, 0.0, 1.0
+			nx, ny, nz := 0.0, 1.0, 0.0
 			// Calculate normal using a Sobel operator with wrapping
 			// Get wrapped indices for x-1, x+1, y-1, y+1
 			xm1 := (x - 1 + width) % width
@@ -137,10 +126,8 @@ func mapToImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool) 
 				dotProduct = 0
 			}
 
-			// Ambient light component
-			ambient := 0.2
-			diffuse := 4.5 * dotProduct
-			light := ambient + diffuse
+			// Light component
+			light := AMBIENT + (DIFFUSE * dotProduct)
 
 			// Apply lighting to color
 			color.R *= light

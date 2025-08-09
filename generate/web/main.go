@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"image"
 	"image/png"
+	"math"
 	"math/rand/v2"
 	"syscall/js"
 
@@ -17,6 +18,9 @@ import (
 
 	"github.com/mazznoer/colorgrad"
 )
+
+const AMBIENT = 0.2 // Ambient light component
+const DIFFUSE = 3.0 // Diffuse light component multiplier
 
 func main() {
 	c := make(chan struct{}, 0)
@@ -36,20 +40,16 @@ func generateTerrain(this js.Value, args []js.Value) any {
 	// Parse parameters from JavaScript
 	seed := uint64(args[0].Float())
 	roughness := args[1].Float()
-	power := args[2].Float()
-	large := args[3].Bool()
-
-	size := 9
-	if large {
-		size = 10
-	}
+	erosion := args[2].Float()
 
 	// Generate heightmap using DiamondSquare algorithm
-	data := generation.DiamondSquare(size, seed, roughness)
+	data := generation.DiamondSquare(10, seed, roughness)
 
-	// Post-process the data
+	// Three really important post-processing steps to eliminate height spikes
 	postprocess.Normalize(data)
-	postprocess.Power(data, power)
+	postprocess.Power(data, erosion)
+	postprocess.BoxBlur(data, 4)
+	postprocess.SeaLevel(data, 0.1)
 
 	// Create gradient
 	grad, err := gradients.ClassicTerrain()
@@ -57,21 +57,24 @@ func generateTerrain(this js.Value, args []js.Value) any {
 		return "Error creating gradient: " + err.Error()
 	}
 
-	// Convert to PNG image
-	imgData, err := createPNGData(data, grad)
-	if err != nil {
-		return "Error creating PNG: " + err.Error()
+	// Render the image
+	img := renderImage(data, grad, true)
+
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return "Error encoding image: " + err.Error()
 	}
 
 	// Convert to base64 for display in browser
-	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(imgData)
+	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
 }
 
 func generateRandomSeed(this js.Value, args []js.Value) interface{} {
 	return float64(rand.Uint64())
 }
 
-func createPNGData(data [][]float64, grad *colorgrad.Gradient) ([]byte, error) {
+// renderImage converts a 2D heightmap to an RGBA image using the provided color gradient.
+func renderImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool) *image.RGBA {
 	width := len(data)
 	height := len(data[0])
 
@@ -79,15 +82,81 @@ func createPNGData(data [][]float64, grad *colorgrad.Gradient) ([]byte, error) {
 
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			img.Set(x, y, grad.At(data[x][y]))
+			h := data[x][y]
+
+			// Get pixel color from gradient
+			color := grad.At(h)
+
+			// Calculate normal vector
+			nx, ny, nz := 0.0, 1.0, 0.0
+			// Calculate normal using a Sobel operator with wrapping
+			// Get wrapped indices for x-1, x+1, y-1, y+1
+			xm1 := (x - 1 + width) % width
+			xp1 := (x + 1) % width
+			ym1 := (y - 1 + height) % height
+			yp1 := (y + 1) % height
+
+			// Sobel operator for gradient with wrapped indices
+			dx := (data[xp1][ym1] + 2*data[xp1][y] + data[xp1][yp1]) -
+				(data[xm1][ym1] + 2*data[xm1][y] + data[xm1][yp1])
+			dy := (data[xm1][yp1] + 2*data[x][yp1] + data[xp1][yp1]) -
+				(data[xm1][ym1] + 2*data[x][ym1] + data[xp1][ym1])
+
+			// Normal vector (normalized)
+			scale := 10.0 // Controls how pronounced the lighting effect is
+			nx, ny = -dx*scale, -dy*scale
+			magnitude := math.Sqrt(nx*nx + ny*ny + 1)
+			nx, ny, nz = nx/magnitude, ny/magnitude, 1.0/magnitude
+
+			// Light direction (coming from the northwest)
+			lightX, lightY, lightZ := -10.0, -6.0, 3.2
+			lightMag := math.Sqrt(lightX*lightX + lightY*lightY + lightZ*lightZ)
+			lightX, lightY, lightZ = lightX/lightMag, lightY/lightMag, lightZ/lightMag
+
+			// Dot product for diffuse lighting
+			dotProduct := nx*lightX + ny*lightY + nz*lightZ
+			if dotProduct < 0 {
+				dotProduct = 0
+			}
+
+			// Light component
+			light := AMBIENT + (DIFFUSE * dotProduct)
+
+			// Apply lighting to color
+			color.R *= light
+			color.G *= light
+			color.B *= light
+
+			// Encode the height as alpha if required
+			if heightToAlpha {
+				color.A = h
+			}
+
+			// Clamp RGB values to [0, 1] range
+			color.R, color.G, color.B = clampRGB(color.R, color.G, color.B)
+
+			img.Set(x, y, color)
 		}
 	}
 
-	var buf bytes.Buffer
-	err := png.Encode(&buf, img)
-	if err != nil {
-		return nil, err
-	}
+	return img
+}
 
-	return buf.Bytes(), nil
+func clampRGB(r, g, b float64) (float64, float64, float64) {
+	if r < 0 {
+		r = 0
+	} else if r > 1 {
+		r = 1
+	}
+	if g < 0 {
+		g = 0
+	} else if g > 1 {
+		g = 1
+	}
+	if b < 0 {
+		b = 0
+	} else if b > 1 {
+		b = 1
+	}
+	return r, g, b
 }

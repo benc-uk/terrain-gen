@@ -2,8 +2,7 @@ export class Controls {
   move = 0
   turn = 0
   lookAngle = 0
-  mouseLockX = 0
-  mouseLockY = 0
+  moveUpDown = 0
 
   constructor() {
     window.addEventListener('keydown', (event) => {
@@ -15,10 +14,16 @@ export class Controls {
           this.move = -0.5
           break
         case 'a':
-          this.turn = -1
+          this.turn = -2.3
           break
         case 'd':
-          this.turn = 1
+          this.turn = 2.3
+          break
+        case 'r':
+          this.moveUpDown = 1
+          break
+        case 'f':
+          this.moveUpDown = -1
           break
       }
     })
@@ -26,16 +31,16 @@ export class Controls {
     window.addEventListener('keyup', (event) => {
       switch (event.key) {
         case 'w':
-          this.move = 0
-          break
         case 's':
           this.move = 0
           break
         case 'a':
-          this.turn = 0
-          break
         case 'd':
           this.turn = 0
+          break
+        case 'r':
+        case 'f':
+          this.moveUpDown = 0
           break
       }
     })
@@ -43,14 +48,13 @@ export class Controls {
     window.addEventListener('blur', () => {
       this.move = 0
       this.turn = 0
+      this.lookAngle = 0
     })
 
     // add mouse capture onclick
     window.addEventListener('click', (event) => {
       if (document.pointerLockElement !== document.body) {
         document.body.requestPointerLock()
-        this.mouseLockX = event.clientX
-        this.mouseLockY = event.clientY
       }
     })
 

@@ -20,14 +20,13 @@ document.getElementById('generateBtn').addEventListener('click', handleGenerateT
 async function handleGenerateTerrain() {
   console.log('Generating terrain...')
 
-  // Show loading message
   const loadingMessage = document.getElementById('loadingMessage')
   const terrainImage = document.getElementById('terrainImage')
   const generateBtn = document.getElementById('generateBtn')
   const randomSeedBtn = document.getElementById('randSeedBtn')
 
   loadingMessage.style.display = 'inline'
-  // terrainImage.style.display = "none";
+  terrainImage.style.display = 'none'
   generateBtn.disabled = true
   randomSeedBtn.disabled = true
 
@@ -53,6 +52,8 @@ async function handleGenerateTerrain() {
     }
 
     const imageData = window.generateTerrain(seed, roughness, power, wide)
+    // save imageData to localStorage for debugging
+    localStorage.setItem('terrainImageData', imageData)
 
     if (typeof imageData === 'string' && imageData.startsWith('Error')) {
       throw new Error(imageData)
@@ -68,6 +69,7 @@ async function handleGenerateTerrain() {
   } finally {
     // Hide loading message and re-enable button
     loadingMessage.style.display = 'none'
+    terrainImage.style.display = 'block'
     generateBtn.disabled = false
     randomSeedBtn.disabled = false
   }

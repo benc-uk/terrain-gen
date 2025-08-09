@@ -41,3 +41,23 @@ export async function loadImageBitmap(url) {
   const blob = await res.blob()
   return createImageBitmap(blob)
 }
+
+export async function loadImageFromStorage(key) {
+  const data = localStorage.getItem(key)
+  if (!data) {
+    throw new Error(`No image data found for key: ${key}`)
+  }
+
+  const blob = await fetch(data).then((res) => res.blob())
+
+  const img = await createImageBitmap(blob)
+  const canvas = document.createElement('canvas')
+  canvas.width = img.width
+  canvas.height = img.height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    throw new Error('Failed to get 2D context for offscreen canvas')
+  }
+  ctx.drawImage(img, 0, 0)
+  return ctx.getImageData(0, 0, img.width, img.height)
+}
