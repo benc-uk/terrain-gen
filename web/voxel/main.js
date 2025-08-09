@@ -25,14 +25,6 @@ const HEIGHT_SCALE = 700
 async function init() {
   //const mapImageData = await loadImageData('map.png')
 
-  // Special case for Comanche maps
-  // const mapImageData = await loadImageData('maps/C7W.png')
-  // const heightImageData = await loadImageData('maps/D7.png')
-  // // Update mapImageData to use heightmap alpha
-  // for (let i = 0; i < mapImageData.data.length; i += 4) {
-  //   mapImageData.data[i + 3] = heightImageData.data[i] // Use alpha channel from heightmap
-  // }
-
   /** @type {ImageData} */
   let mapImageData
   try {

@@ -39,3 +39,4 @@ output/
 # WASM files
 **/main.wasm
 **/wasm_exec.js
+web/voxel/*.png

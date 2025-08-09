@@ -16,16 +16,7 @@ export async function loadImageData(url) {
 
   const blob = await res.blob()
 
-  const img = await createImageBitmap(blob)
-  const canvas = document.createElement('canvas')
-  canvas.width = img.width
-  canvas.height = img.height
-  const ctx = canvas.getContext('2d')
-  if (!ctx) {
-    throw new Error('Failed to get 2D context for offscreen canvas')
-  }
-  ctx.drawImage(img, 0, 0)
-  return ctx.getImageData(0, 0, img.width, img.height)
+  return blobToImageData(blob)
 }
 
 /** * Loads an image from a URL and returns it as an ImageBitmap.
@@ -50,6 +41,10 @@ export async function loadImageFromStorage(key) {
 
   const blob = await fetch(data).then((res) => res.blob())
 
+  return blobToImageData(blob)
+}
+
+async function blobToImageData(blob) {
   const img = await createImageBitmap(blob)
   const canvas = document.createElement('canvas')
   canvas.width = img.width
