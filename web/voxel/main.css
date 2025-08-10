@@ -26,3 +26,20 @@ button {
 button:hover {
   background-color: #3b3b3b;
 }
+
+#fps {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-size: 18px;
+  font-family: Arial, Helvetica, sans-serif;
+  padding: 4px 8px;
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+#backBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}

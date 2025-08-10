@@ -1,14 +1,15 @@
 //@ts-check
-import { CanvasBlitter } from './lib/canvas-blitter.js'
+// import { CanvasBlitter } from './lib/canvas-blitter.js'
 import { loadImageFromStorage } from './lib/images.js'
 import { HeightmapAlpha } from './heightmap.js'
 import { Camera } from './camera.js'
 import { Controls } from './controls.js'
+import { GLBlitter } from './lib/gl-blitter.js'
 
 /** @type {HeightmapAlpha} */
 let terrainMap
 
-/** @type {CanvasBlitter} */
+/** @type {GLBlitter} */
 let blitter
 
 /** @type {Camera} */
@@ -19,7 +20,7 @@ let controls
 
 const MAX_DIST = 1200
 const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
-const Z_LOD_FACTOR = 12 / MAX_DIST
+const Z_LOD_FACTOR = 18 / MAX_DIST
 const HEIGHT_SCALE = 700
 
 async function init() {
@@ -37,8 +38,7 @@ async function init() {
 
   terrainMap = new HeightmapAlpha(mapImageData)
 
-  blitter = new CanvasBlitter()
-  blitter.showFPS = true
+  blitter = new GLBlitter()
 
   camera = new Camera(terrainMap.width / 2, terrainMap.height / 2, 0, 6, blitter.height / 3)
   controls = new Controls()
@@ -55,6 +55,7 @@ function drawTerrain() {
 
   let z = 1
   let dz = Z_LOD_FACTOR
+
   while (z < MAX_DIST) {
     const plLeft = {
       x: camera.x + Math.cos(leftAngle) * z,
@@ -95,10 +96,15 @@ function drawTerrain() {
 function renderLoop(ts) {
   camera.update(terrainMap, controls)
 
-  blitter.fillGradient(190, 210, 255, 0, 0, 20) // Sky gradient
+  blitter.clear()
   drawTerrain()
-
   blitter.draw(ts)
+
+  // Update FPS display
+  const fpsDisplay = document.getElementById('fps')
+  if (fpsDisplay) {
+    fpsDisplay.textContent = `FPS: ${blitter.fps}`
+  }
 
   requestAnimationFrame(renderLoop)
 }

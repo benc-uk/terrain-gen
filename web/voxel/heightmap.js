@@ -33,7 +33,6 @@ export class HeightmapAlpha {
    * @returns {Array<number>} An array containing values, 0-2 for RGB and 3 for height.
    */
   getData(x, y) {
-    // Floor the coordinates first, then wrap to stay within bounds
     x = Math.floor(x)
     y = Math.floor(y)
     x = ((x % this.#width) + this.#width) % this.#width
