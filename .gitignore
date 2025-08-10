@@ -40,3 +40,4 @@ output/
 **/main.wasm
 **/wasm_exec.js
 web/voxel/*.png
+!web/voxel/sky.png
