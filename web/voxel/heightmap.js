@@ -1,6 +1,7 @@
 //@ts-check
+
 // ===============================================================================
-// Heightmap
+// HeightmapAlpha
 // A class for managing a heightmap from an ImageData object.
 // This class provides methods to get height and color at specific coordinates.
 // This assumes the height is stored in the alpha channel of the image data.

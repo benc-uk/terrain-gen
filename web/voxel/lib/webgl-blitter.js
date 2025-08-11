@@ -91,7 +91,8 @@ export class GLBlitter {
 
     this.#bgTex = twgl.createTexture(gl, {
       minMag: gl.LINEAR,
-      src: 'sky.png',
+      width: this.width,
+      height: this.height,
     })
 
     gl.clearColor(0, 0, 0, 1)
@@ -147,11 +148,36 @@ export class GLBlitter {
 
   clear() {
     if (!this.#gl) return
-    const gl = this.#gl
 
     // NOTE: Should we use fill(0) instead?
     this.#outData = new Uint8Array(this.width * this.height * 4)
     this.#gl.clear(this.#gl.COLOR_BUFFER_BIT)
+  }
+
+  backgroundGradient(r1, g1, b1, r2, g2, b2) {
+    if (!this.#gl) return
+    const gl = this.#gl
+    const data = new Uint8Array(this.width * this.height * 4)
+
+    for (let y = 0; y < this.height; y++) {
+      const ratio = y / this.height
+      const r = Math.floor(r1 + (r2 - r1) * ratio)
+      const g = Math.floor(g1 + (g2 - g1) * ratio)
+      const b = Math.floor(b1 + (b2 - b1) * ratio)
+      for (let x = 0; x < this.width; x++) {
+        const index = (y * this.width + x) * 4
+        data[index] = r
+        data[index + 1] = g
+        data[index + 2] = b
+        data[index + 3] = 255 // Fully opaque
+        // Note: Using 255 for alpha to ensure the background is fully opaque
+      }
+    }
+    twgl.setTextureFromArray(gl, this.#bgTex, data, {
+      width: this.width,
+      height: this.height,
+      minMag: gl.LINEAR,
+    })
   }
 
   get fps() {

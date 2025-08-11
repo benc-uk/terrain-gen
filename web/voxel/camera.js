@@ -27,29 +27,29 @@ export class Camera {
     console.log(`Camera initialized at (${this.x}, ${this.y}, ${this.z}) with angle ${this.angle} and horizon ${this.horizon}`)
   }
 
-  update(terrainMap, controls) {
+  update(terrainMap, controls, dt) {
     const MIN_GROUND_HEIGHT = 15
 
     if (controls.turn !== 0) {
-      this.angle += controls.turn * 0.02
+      this.angle += controls.turn * 0.6 * dt
     }
 
     if (controls.move !== 0) {
-      this.x += Math.cos(this.angle) * 6 * controls.move
-      this.y += Math.sin(this.angle) * 6 * controls.move
+      this.x += Math.cos(this.angle) * 400 * controls.move * dt
+      this.y += Math.sin(this.angle) * 400 * controls.move * dt
       // use lookAngle to adjust this.z height using trigonometry
       // Only adjust z if user is moving and looking up/down
 
-      this.z += Math.sin(this.vAngle) * 6 * controls.move
+      this.z += Math.sin(this.vAngle) * 400 * controls.move * dt
     }
 
     if (controls.lookAngle !== 0) {
-      this.horizon -= controls.lookAngle * 5
+      this.horizon -= controls.lookAngle * 60 * dt
       this.vAngle -= controls.lookAngle * 0.01
     }
 
     if (controls.moveUpDown !== 0) {
-      this.z += controls.moveUpDown * 6
+      this.z += controls.moveUpDown * 188 * dt
     }
 
     if (this.horizon < 0) {

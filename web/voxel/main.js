@@ -1,10 +1,9 @@
 //@ts-check
-// import { CanvasBlitter } from './lib/canvas-blitter.js'
 import { loadImageFromStorage } from './lib/images.js'
 import { HeightmapAlpha } from './heightmap.js'
 import { Camera } from './camera.js'
 import { Controls } from './controls.js'
-import { GLBlitter } from './lib/gl-blitter.js'
+import { GLBlitter } from './lib/webgl-blitter.js'
 
 /** @type {HeightmapAlpha} */
 let terrainMap
@@ -18,14 +17,14 @@ let camera
 /** @type {Controls} */
 let controls
 
-const MAX_DIST = 1200
+const MAX_DIST = 1400
 const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
 const Z_LOD_FACTOR = 18 / MAX_DIST
-const HEIGHT_SCALE = 700
+const HEIGHT_SCALE = 600
+
+let lastTime = 0
 
 async function init() {
-  //const mapImageData = await loadImageData('map.png')
-
   /** @type {ImageData} */
   let mapImageData
   try {
@@ -39,6 +38,7 @@ async function init() {
   terrainMap = new HeightmapAlpha(mapImageData)
 
   blitter = new GLBlitter()
+  blitter.backgroundGradient(10, 0, 70, 255, 50, 10)
 
   camera = new Camera(terrainMap.width / 2, terrainMap.height / 2, 0, 6, blitter.height / 3)
   controls = new Controls()
@@ -54,7 +54,7 @@ function drawTerrain() {
   const heightBuffer = new Array(blitter.width).fill(blitter.height)
 
   let z = 1
-  let dz = Z_LOD_FACTOR
+  let dz = 0
 
   while (z < MAX_DIST) {
     const plLeft = {
@@ -94,7 +94,10 @@ function drawTerrain() {
 }
 
 function renderLoop(ts) {
-  camera.update(terrainMap, controls)
+  const dt = lastTime === 0 ? 0 : (ts - lastTime) / 1000 // Convert to seconds
+  // console.log(`Render loop at ${ts} with dt=${dt}`)
+
+  camera.update(terrainMap, controls, dt)
 
   blitter.clear()
   drawTerrain()
@@ -106,6 +109,7 @@ function renderLoop(ts) {
     fpsDisplay.textContent = `FPS: ${blitter.fps}`
   }
 
+  lastTime = ts
   requestAnimationFrame(renderLoop)
 }
 
