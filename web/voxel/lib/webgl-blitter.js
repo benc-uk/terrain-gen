@@ -2,7 +2,7 @@
 
 import * as twgl from './twgl.js'
 
-const vertShaderSource = `#version 300 es
+const vertShaderSource = /*glsl*/ `#version 300 es
 precision highp float;
 
 in vec4 position;
@@ -14,7 +14,7 @@ void main() {
 }
 `
 
-const fragShaderSource = `#version 300 es
+const fragShaderSource = /*glsl*/ `#version 300 es
 precision highp float;
 
 in vec2 imgCoord;
@@ -23,7 +23,7 @@ out vec4 pixel;
 
 void main() {
   vec4 color = texture(image, vec2(imgCoord.x, -imgCoord.y));
-  if(color.r == 0.0 && color.g == 0.0 && color.b == 0.0) discard;
+  if(color.a == 0.0) discard; // Discard transparent pixels
   pixel = color;
 }
 `
@@ -41,6 +41,8 @@ export class GLBlitter {
   #bgTex
   /** @type {Uint8Array} */
   #outData
+  /** @type {Uint32Array} */
+  #outData32
 
   #lastFrameTime = 0
   #frameTimeBucket = []
@@ -81,6 +83,7 @@ export class GLBlitter {
     this.height = gl.canvas.height
 
     this.#outData = new Uint8Array(this.width * this.height * 4)
+    this.#outData32 = new Uint32Array(this.#outData.buffer)
 
     this.#outTex = twgl.createTexture(gl, {
       minMag: gl.LINEAR,
@@ -99,16 +102,13 @@ export class GLBlitter {
   }
 
   drawVLine(x, ytop, ybottom, r, g, b) {
-    if (ytop > ybottom) {
-      return
-    }
+    if (ytop > ybottom) return
+
+    // Pack RGBA into 32-bit value (little-endian)
+    const packedColor = (255 << 24) | (b << 16) | (g << 8) | r
 
     for (let y = ytop; y < ybottom; y++) {
-      const index = (y * this.width + x) * 4
-      this.#outData[index] = r
-      this.#outData[index + 1] = g
-      this.#outData[index + 2] = b
-      this.#outData[index + 3] = 0
+      this.#outData32[y * this.width + x] = packedColor
     }
   }
 
@@ -126,10 +126,10 @@ export class GLBlitter {
     })
 
     // Draw backgound
-    twgl.setBuffersAndAttributes(gl, this.#progInfo, this.#quadBuffer)
     twgl.setUniforms(this.#progInfo, {
       image: this.#bgTex,
     })
+    twgl.setBuffersAndAttributes(gl, this.#progInfo, this.#quadBuffer)
     twgl.drawBufferInfo(gl, this.#quadBuffer)
 
     // Draw output image buffer
@@ -150,7 +150,8 @@ export class GLBlitter {
     if (!this.#gl) return
 
     // NOTE: Should we use fill(0) instead?
-    this.#outData = new Uint8Array(this.width * this.height * 4)
+    // this.#outData = new Uint8Array(this.width * this.height * 4)
+    this.#outData.fill(0)
     this.#gl.clear(this.#gl.COLOR_BUFFER_BIT)
   }
 

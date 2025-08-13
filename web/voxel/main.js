@@ -17,12 +17,13 @@ let camera
 /** @type {Controls} */
 let controls
 
-const MAX_DIST = 1400
+const MAX_DIST = 1600
 const LIGHT_ATTEN_FACTOR = 3 / MAX_DIST
 const Z_LOD_FACTOR = 18 / MAX_DIST
 const HEIGHT_SCALE = 600
 
 let lastTime = 0
+let heightBuffer = []
 
 async function init() {
   /** @type {ImageData} */
@@ -43,6 +44,8 @@ async function init() {
   camera = new Camera(terrainMap.width / 2, terrainMap.height / 2, 0, 6, blitter.height / 3)
   controls = new Controls()
 
+  heightBuffer = new Array(blitter.width).fill(blitter.height)
+
   // Start the rendering loop
   renderLoop(performance.now())
 }
@@ -51,7 +54,8 @@ function drawTerrain() {
   const leftAngle = camera.angle - camera.fov / 2
   const rightAngle = camera.angle + camera.fov / 2
 
-  const heightBuffer = new Array(blitter.width).fill(blitter.height)
+  // Reset height buffer
+  heightBuffer.fill(blitter.height)
 
   let z = 1
   let dz = 0
@@ -83,6 +87,12 @@ function drawTerrain() {
 
       // Draw vertical column
       if (height > heightBuffer[i]) continue
+
+      if (height >= blitter.height) {
+        heightBuffer[i] = blitter.height
+        continue
+      }
+
       blitter.drawVLine(i, height, heightBuffer[i], terrain[0] * lightAtten, terrain[1] * lightAtten, terrain[2] * lightAtten)
 
       if (height < heightBuffer[i]) heightBuffer[i] = height
