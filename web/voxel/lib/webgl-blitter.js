@@ -99,6 +99,10 @@ export class GLBlitter {
     })
 
     gl.clearColor(0, 0, 0, 1)
+    fit(canvas) // Fit the canvas to its container
+    window.addEventListener('resize', () => {
+      fit(canvas)
+    })
   }
 
   drawVLine(x, ytop, ybottom, r, g, b) {
@@ -184,4 +188,34 @@ export class GLBlitter {
   get fps() {
     return this.#fps
   }
+}
+
+function fit(canvas) {
+  const aspectRatio = canvas.width / canvas.height
+
+  // Get container dimensions (or use window if no parent)
+  const container = canvas.parentElement || document.body
+  const containerRect = container.getBoundingClientRect()
+  const containerWidth = containerRect.width || window.innerWidth
+  const containerHeight = containerRect.height || window.innerHeight
+  const containerAspectRatio = containerWidth / containerHeight
+
+  let displayWidth, displayHeight
+
+  // Calculate display size while maintaining aspect ratio
+  if (aspectRatio > containerAspectRatio) {
+    // Canvas is wider than container - fit to width
+    displayWidth = containerWidth
+    displayHeight = containerWidth / aspectRatio
+  } else {
+    // Canvas is taller than container - fit to height
+    displayHeight = containerHeight
+    displayWidth = containerHeight * aspectRatio
+  }
+
+  // Apply the calculated dimensions
+  canvas.style.width = displayWidth + 'px'
+  canvas.style.height = displayHeight + 'px'
+  canvas.style.display = 'block'
+  canvas.style.margin = 'auto'
 }
