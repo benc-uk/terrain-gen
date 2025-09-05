@@ -14,10 +14,10 @@ export class Controls {
           this.move = -1
           break
         case 'a':
-          this.turn = -1
+          this.turn = -0.06
           break
         case 'd':
-          this.turn = 1
+          this.turn = 0.06
           break
         case 'r':
           this.moveUpDown = 1
@@ -89,31 +89,39 @@ export class Controls {
     document.addEventListener('mousemove', (event) => {
       if (document.pointerLockElement === document.body) {
         // Apply a dead zone to mouse movement
-        const deadZone = 1.0 // Dead zone in pixels
-        const sensitivityX = 0.2 // Horizontal sensitivity
-        const sensitivityY = 0.2 // Vertical sensitivity
+        const deadZone = 6.0 // Dead zone in pixels (increased for better control)
+        const sensitivityX = 0.001 // Horizontal sensitivity (reduced for smoother movement)
+        const sensitivityY = 0.001 // Vertical sensitivity (reduced for smoother movement)
+        const dampening = 0.8 // Dampening factor for smooth movement
 
         // Get mouse movement deltas
         const dx = event.movementX
         const dy = event.movementY
 
-        // Apply dead zone to horizontal movement
+        // Apply dead zone and accumulate movement for horizontal
         if (Math.abs(dx) > deadZone) {
           // Only apply the portion of movement outside the dead zone
           const effectiveX = (dx * (Math.abs(dx) - deadZone)) / Math.abs(dx)
-          this.turn = effectiveX * sensitivityX
-        } else {
-          this.turn = 0
+          this.turn += effectiveX * sensitivityX
         }
 
-        // Apply dead zone to vertical movement
+        // Apply dead zone and accumulate movement for vertical
         if (Math.abs(dy) > deadZone) {
           // Only apply the portion of movement outside the dead zone
           const effectiveY = (dy * (Math.abs(dy) - deadZone)) / Math.abs(dy)
-          this.lookAngle = effectiveY * sensitivityY
-        } else {
-          this.lookAngle = 0
+          this.lookAngle += effectiveY * sensitivityY * 1.2
         }
+
+        // Apply dampening to smooth out the movement
+        this.turn *= dampening
+        this.lookAngle *= dampening
+
+        if (Math.abs(this.turn) < 0.001) this.turn = 0
+        if (Math.abs(this.lookAngle) < 0.001) this.lookAngle = 0
+
+        // Clamp values to reasonable ranges
+        this.turn = Math.max(-1, Math.min(1, this.turn))
+        this.lookAngle = Math.max(-0.1, Math.min(0.1, this.lookAngle))
       }
     })
   }

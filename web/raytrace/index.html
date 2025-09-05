@@ -36,10 +36,23 @@
         top: 10px;
         left: 10px;
       }
+      #backBtn:hover {
+        background-color: #6b6b6b;
+      }
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: rgb(173, 173, 173);
+        font-size: 28px;
+        font-family: Arial, sans-serif;
+      }
     </style>
   </head>
   <body>
     <button id="backBtn" onclick="history.back();">⬅️ Back to Generator</button>
     <canvas></canvas>
+    <div id="loading">Loading, please wait...</div>
   </body>
 </html>

@@ -15,9 +15,8 @@ uniform float u_heightScale; // how tall the terrain is in world units
 uniform float u_terrainScale; // Size of terrain in world units
 
 // Ray marching parameters
-const int MAX_STEPS = 1200; // Maximum ray marching steps
-const float MAX_DISTANCE = 2200.0; // Maximum ray distance
-const float MIN_STEP = 0.9; // Minimum step size
+const float MAX_DISTANCE = 10000.0; // Maximum ray distance
+const float MIN_STEP = 4.0; // Minimum step size
 
 // Get height from heightmap at world position
 float getHeight(vec2 worldPos) {
@@ -31,16 +30,25 @@ vec3 getColor(vec2 worldPos) {
   return texture(u_map, uv).rgb;
 }
 
-// Simple raytracing for terrain intersection
+// DDA-optimized raytracing for terrain intersection
 bool raycastTerrain(vec3 rayOrigin, vec3 rayDir, out vec3 hitPoint, out vec3 color) {
   vec3 currentPos = rayOrigin;
   float t = 0.0;
-  float stepSize = MIN_STEP;
+
+  // Calculate step size based on heightmap resolution for DDA-like behavior
+  vec2 mapSize = vec2(textureSize(u_map, 0));
+  float worldTexelSize = u_terrainScale / max(mapSize.x, mapSize.y);
+  float baseStepSize = worldTexelSize * 0.5; // Step through half texels for safety
 
   // March along the ray
-  for(int i = 0; i < MAX_STEPS; i++) {
+  while(t < MAX_DISTANCE) {
     // Get terrain height at current position
     float terrainHeight = getHeight(currentPos.xz);
+
+    // if ray starts above heiest point and is pointing up, no hit
+    if(currentPos.y > u_heightScale && rayDir.y >= 0.0) {
+      return false;
+    }
 
     // Check for intersection
     if(currentPos.y <= terrainHeight) {
@@ -49,20 +57,16 @@ bool raycastTerrain(vec3 rayOrigin, vec3 rayDir, out vec3 hitPoint, out vec3 col
       return true;
     }
 
-    // Adaptive step size based on height above terrain
-    float heightDiff = currentPos.y - terrainHeight;
-    if(heightDiff > 0.0) {
-      stepSize = max(MIN_STEP, min(9.0, heightDiff * 0.5));
-    }
+    // Use consistent step size based on heightmap resolution
+    float stepSize = max(MIN_STEP, baseStepSize);
+
+    // Increase step size when high above terrain, this speeds up raymarching a lot!
+    float heightDiff = (currentPos.y - terrainHeight) / u_heightScale;
+    stepSize *= mix(1.0, 100.0, heightDiff);
 
     // Step along ray
     t += stepSize;
     currentPos = rayOrigin + rayDir * t;
-
-    // Stop if we've gone too far distance-wise
-    if(t > MAX_DISTANCE) {
-      break;
-    }
   }
 
   return false;
