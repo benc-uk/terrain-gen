@@ -54,5 +54,7 @@ async function blobToImageData(blob) {
     throw new Error('Failed to get 2D context for offscreen canvas')
   }
   ctx.drawImage(img, 0, 0)
+  console.log('loaded image', img.width, img.height)
+
   return ctx.getImageData(0, 0, img.width, img.height)
 }

@@ -21,6 +21,7 @@ const float MIN_STEP = 4.0; // Minimum step size
 // Get height from heightmap at world position
 float getHeight(vec2 worldPos) {
   vec2 uv = worldPos / u_terrainScale;
+
   return texture(u_map, uv).a * u_heightScale;
 }
 

@@ -12,10 +12,10 @@ const LOOK_SPEED = 0.5
 
 export class Camera {
   constructor(controls, terrainScale, aspectRatio) {
-    this.pos = [120, 550, 0]
-    this.target = [120, 450, -200]
+    this.pos = [0, 850, 0]
+    this.target = [0, 450, -1200]
     this.up = [0, 1, 0]
-    this.fov = Math.PI / 4
+    this.fov = Math.PI / 3.5
     this.yaw = 0
     this.pitch = 0
     this.controls = controls
@@ -81,29 +81,6 @@ export class Camera {
       this.pos[2] += forward[2] * this.controls.move * MOVE_SPEED * frameTimeMultiplier
     }
 
-    // Calculate terrain position to sample the heightmap
-    const terrainPosX = Math.floor((this.pos[0] / this.terrainScale) * terrainMap.width) % terrainMap.width
-    const terrainPosZ = Math.floor((this.pos[2] / this.terrainScale) * terrainMap.height) % terrainMap.height
-
-    // Wrap the position around the texture (handle negative values correctly)
-    const wrappedX = terrainPosX % terrainMap.width
-    const wrappedZ = terrainPosZ % terrainMap.height
-
-    // Get height at the camera position
-    // Assuming terrainMap has a data property with the height values
-    // Get the index in the data array
-    const index = (wrappedZ * terrainMap.width + wrappedX) * 4 // *4 for RGBA
-    // Use the red channel as height (common in heightmaps)
-    const terrainHeight = (terrainMap.data[index] / 256) * heightScale
-
-    console.log(wrappedX, wrappedZ, terrainHeight, this.pos[1])
-
-    // Ensure camera stays above terrain with a minimum clearance
-    const minClearance = 4.0
-    if (this.pos[1] < terrainHeight + minClearance) {
-      this.pos[1] = terrainHeight + minClearance
-    }
-
     // Move up/down
     if (this.controls.moveUpDown !== 0) {
       this.pos[1] += this.controls.moveUpDown * 2.0 * frameTimeMultiplier
@@ -125,5 +102,7 @@ export class Camera {
 
     // Update view matrix after position/target changes
     this.updateViewMatrix()
+
+    console.log(`Camera Position: x=${this.pos[0].toFixed(2)}, y=${this.pos[1].toFixed(2)}, z=${this.pos[2].toFixed(2)}`)
   }
 }
