@@ -128,5 +128,4 @@ func MonoNoise(data [][]float64, amount float64) {
 			}
 		}
 	}
-
 }

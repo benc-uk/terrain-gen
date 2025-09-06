@@ -45,15 +45,15 @@ func generateTerrain(this js.Value, args []js.Value) any {
 	// Generate heightmap using DiamondSquare algorithm
 	data := generation.DiamondSquare(10, seed, roughness)
 
-	// remove the first row and column to make it square
-	// if len(data) > 0 {
-	// 	data = data[1:]
-	// 	for i := range data {
-	// 		if len(data[i]) > 0 {
-	// 			data[i] = data[i][1:]
-	// 		}
-	// 	}
-	// }
+	//remove the first row and column to make it square
+	if len(data) > 0 {
+		data = data[1:]
+		for i := range data {
+			if len(data[i]) > 0 {
+				data[i] = data[i][1:]
+			}
+		}
+	}
 
 	// Three really important post-processing steps to eliminate height spikes
 	postprocess.Normalize(data)
@@ -144,6 +144,11 @@ func renderImage(data [][]float64, grad *colorgrad.Gradient, heightToAlpha bool)
 
 			// Clamp RGB values to [0, 1] range
 			color.R, color.G, color.B = clampRGB(color.R, color.G, color.B)
+
+			// Debug: highlight edges
+			// if x <= 1 || y <= 1 {
+			// 	color.R, color.G, color.B = 1, 0, 0 // Red border for debugging
+			// }
 
 			img.Set(x, y, color)
 		}

@@ -48,11 +48,23 @@
         font-size: 28px;
         font-family: Arial, sans-serif;
       }
+      #camPos {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        color: rgb(173, 173, 173);
+        font-size: 19px;
+        font-family: monospace;
+        background-color: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 4px;
+      }
     </style>
   </head>
   <body>
     <button id="backBtn" onclick="history.back();">⬅️ Back to Generator</button>
     <canvas></canvas>
     <div id="loading">Loading, please wait...</div>
+    <div id="camPos"></div>
   </body>
 </html>

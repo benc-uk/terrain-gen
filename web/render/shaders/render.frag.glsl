@@ -16,7 +16,7 @@ uniform float u_terrainScale; // Size of terrain in world units
 
 // Ray marching parameters
 const float MAX_DISTANCE = 10000.0; // Maximum ray distance
-const float MIN_STEP = 4.0; // Minimum step size
+const float MIN_STEP = 6.0; // Minimum step size
 
 // Get height from heightmap at world position
 float getHeight(vec2 worldPos) {

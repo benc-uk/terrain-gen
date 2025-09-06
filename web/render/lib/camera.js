@@ -8,14 +8,16 @@
 import * as twgl from 'https://esm.sh/twgl.js'
 
 const MOVE_SPEED = 50.0
-const LOOK_SPEED = 0.5
+const LOOK_SPEED = 0.3
 
 export class Camera {
   constructor(controls, terrainScale, aspectRatio) {
-    this.pos = [0, 850, 0]
-    this.target = [0, 450, -1200]
+    this.pos = [512, 550, 512]
+    this.realX = 0
+    this.realZ = 0
+    this.target = [512, 250, -1200]
     this.up = [0, 1, 0]
-    this.fov = Math.PI / 3.5
+    this.fov = Math.PI / 6
     this.yaw = 0
     this.pitch = 0
     this.controls = controls
@@ -34,6 +36,20 @@ export class Camera {
     // Initialize matrices
     this.updateProjectionMatrix(aspectRatio)
     this.updateViewMatrix()
+    this.camPosDisplay = document.getElementById('camPos')
+
+    // hack debug to move x and z with arrow keys
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp') {
+        this.pos[2] -= 10
+      } else if (e.key === 'ArrowDown') {
+        this.pos[2] += 10
+      } else if (e.key === 'ArrowLeft') {
+        this.pos[0] -= 10
+      } else if (e.key === 'ArrowRight') {
+        this.pos[0] += 10
+      }
+    })
   }
 
   updateProjectionMatrix(aspectRatio) {
@@ -86,15 +102,21 @@ export class Camera {
       this.pos[1] += this.controls.moveUpDown * 2.0 * frameTimeMultiplier
     }
 
-    // Reset the camera to avoid floating point precision issues
-    if (Math.abs(this.pos[0] % this.terrainScale)) {
-      this.pos[0] = this.pos[0] % this.terrainScale
-    }
-    if (Math.abs(this.pos[2] % this.terrainScale)) {
-      this.pos[2] = this.pos[2] % this.terrainScale
+    // implement wrap around
+    this.pos[0] = ((this.pos[0] % this.terrainScale) + this.terrainScale) % this.terrainScale
+    this.pos[2] = ((this.pos[2] % this.terrainScale) + this.terrainScale) % this.terrainScale
+
+    // get height from terrain map
+    this.realX = Math.floor((this.pos[0] / this.terrainScale) * terrainMap.width)
+    this.realZ = Math.floor((this.pos[2] / this.terrainScale) * terrainMap.height)
+    const index = (this.realZ * terrainMap.width + this.realX) * 4
+    const alpha = terrainMap.data[index + 3] / 255.0 // alpha channel
+    const h = alpha * heightScale + 100.0 // add a little offset so we don't clip into the ground
+
+    if (this.pos[1] < h) {
+      this.pos[1] = h
     }
 
-    // Prevent camera from going below terrain height + offset
     // Update camera target based on position and forward direction
     this.target[0] = this.pos[0] + forward[0]
     this.target[1] = this.pos[1] + forward[1]
@@ -103,6 +125,6 @@ export class Camera {
     // Update view matrix after position/target changes
     this.updateViewMatrix()
 
-    console.log(`Camera Position: x=${this.pos[0].toFixed(2)}, y=${this.pos[1].toFixed(2)}, z=${this.pos[2].toFixed(2)}`)
+    this.camPosDisplay.innerText = `${this.realX},  ${Math.floor(this.pos[1])},  ${this.realZ}`
   }
 }

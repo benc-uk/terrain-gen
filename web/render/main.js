@@ -42,7 +42,8 @@ async function init() {
     u_viewProjectionMatrix: camera.viewProjectionMatrix,
     u_map: twgl.createTexture(gl, {
       src: imageData,
-      minMag: gl.LINEAR,
+      min: gl.LINEAR_MIPMAP_LINEAR,
+      mag: gl.LINEAR,
       wrap: gl.REPEAT,
     }),
     u_terrainScale: TERRAIN_SCALE,

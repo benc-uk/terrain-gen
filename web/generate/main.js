@@ -53,6 +53,7 @@ async function handleGenerateTerrain() {
 
     const imageData = window.generateTerrain(seed, roughness, power, wide)
     // save imageData to localStorage for debugging
+    localStorage.removeItem('terrainImageData')
     localStorage.setItem('terrainImageData', imageData)
 
     if (typeof imageData === 'string' && imageData.startsWith('Error')) {
