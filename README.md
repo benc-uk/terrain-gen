@@ -1,8 +1,8 @@
-# Terrain Generation & Voxel Rendering
+# Terrain Generation & Raytraced Rendering
 
-A project exploring procedural terrain generation using fractal algorithms, and voxel based rendering techniques. It takes inspiration from classic terrain generation software such as Vista Pro on the Amiga, and also the classic VoxelSpace rendering technique as shown in the https://github.com/s-macke/VoxelSpace repo
+A project exploring procedural terrain generation using fractal algorithms, and real-time raytraced rendering techniques. It takes inspiration from classic terrain generation software such as Vista Pro on the Amiga, with modern GPU-accelerated raytracing for immersive 3D terrain exploration.
 
-It uses a mixture of Go, WebAssembly & modern JS to deliver high-performance terrain generation and visualization.
+It uses a mixture of Go, WebAssembly, modern JavaScript, and WebGL shaders to deliver high-performance terrain generation and visualization.
 
 ![alt text](.dev/image-2.png)
 ![alt text](.dev/image-1.png)
@@ -19,7 +19,7 @@ It uses a mixture of Go, WebAssembly & modern JS to deliver high-performance ter
 ### 🌐 Web Applications
 
 - **Interactive Generator**: Real-time terrain generation in the browser using WebAssembly
-- **Voxel Space Renderer**: 3D terrain exploration with camera controls and LOD optimization
+- **Raytraced Renderer**: GPU-accelerated 3D terrain exploration with real-time raymarching
 - **Parameter Control**: Adjustable smoothness, erosion, and random seed generation
 
 ### 🖥️ Command Line Interface
@@ -33,7 +33,8 @@ It uses a mixture of Go, WebAssembly & modern JS to deliver high-performance ter
 
 - **WebAssembly Integration**: Go compiled to WASM for browser-based terrain generation
 - **Modular Architecture**: Separated packages for generation, gradients, and post-processing
-- **Performance Optimized**: Efficient algorithms with distance-based level of detail
+- **GPU Raytracing**: Real-time raymarching with WebGL fragment shaders for smooth terrain rendering
+- **Advanced Camera System**: Free-form camera movement with perspective projection
 
 ## Getting Started
 
@@ -81,8 +82,8 @@ make web-serve
 
 Visit `http://localhost:8000/generate/` to access the interactive terrain generator with real-time parameter adjustment.
 
-**Voxel Space Explorer:**
-After generating terrain in the web interface, click "🚁 Explore!" to view the terrain in 3D using a voxel space renderer. Navigate with WASD keys and mouse controls.
+**Raytraced Terrain Explorer:**
+After generating terrain in the web interface, click "🚁 Render!" to view the terrain in 3D using a GPU-accelerated raytracing renderer. Navigate with WASD keys and mouse controls for smooth exploration.
 
 ### Development
 
@@ -124,9 +125,9 @@ make help
 
 - Interactive web interface with real-time parameter controls and preview
 
-**`web/voxel/`**
+**`web/render/`**
 
-- Voxel space terrain renderer with camera controls, LOD optimization, and atmospheric effects
+- GPU-accelerated raytraced terrain renderer with WebGL shaders, real-time raymarching, and advanced camera controls
 
 ## Algorithm Details
 
@@ -147,6 +148,7 @@ The terrain generator uses an enhanced Diamond-Square algorithm featuring:
 5. **Sea Level**: Minimum elevation clamping for water bodies
 6. **Lighting**: Sobel edge detection generates surface normals for realistic shading
 7. **Coloring**: Multi-stop gradient mapping based on elevation zones
+8. **Raytracing**: GPU fragment shaders perform real-time raymarching for 3D visualization
 
 ## Examples
 
@@ -157,15 +159,16 @@ The terrain generator uses an enhanced Diamond-Square algorithm featuring:
 - High peaks with snow caps (white)
 - Realistic lighting and shadows enhance 3D appearance
 
-The voxel space renderer provides an immersive exploration experience with:
+The raytraced renderer provides an immersive exploration experience with:
 
-- Smooth camera movement and rotation
-- Distance-based level of detail for performance
-- Atmospheric perspective and lighting effects
+- Real-time GPU raymarching through terrain heightmaps
+- Smooth camera movement and rotation with WASD + mouse controls
+- Dynamic lighting and atmospheric effects
+- High-performance WebGL fragment shader implementation
 
 ## References
 
-The voxel space rendering technique is inspired by the classic approach documented in [VoxelSpace](https://github.com/s-macke/VoxelSpace) by Sebastian Macke, which demonstrates the elegant raycasting method used in games like Comanche.
+This project uses modern GPU raytracing techniques for real-time terrain visualization, implementing raymarching algorithms in WebGL fragment shaders for smooth, high-performance 3D rendering.
 
 ## License
 
